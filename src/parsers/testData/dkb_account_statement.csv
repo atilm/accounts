@@ -1,0 +1,9 @@
+"Kontonummer:";"DE08120300001234567890 / Girokonto";
+
+"Von:";"04.09.2021";
+"Bis:";"04.09.2024";
+"Kontostand vom 04.09.2024:";"10.123,45 EUR";
+
+"Buchungstag";"Wertstellung";"Buchungstext";"Auftraggeber / Begünstigter";"Verwendungszweck";"Kontonummer";"BLZ";"Betrag (EUR)";"Gläubiger-ID";"Mandatsreferenz";"Kundenreferenz";
+"04.09.2024";"04.09.2024";"UMBUCHUNG";"VISA-CARD GELDANLAGE";"4930 0000 2699 0595 AUSGLEICHSBUCHUNG";"0001999333";"12030000";"0,97";"";"";"";
+"02.09.2024";"02.09.2024";"Kartenzahlung";"EDEKA.BERGER";"2024-08-31      Debitk.63 VISA Debit";"DE96120300009876543210";"BYLADEM1001";"-60,01";"";"";"484244280987654";

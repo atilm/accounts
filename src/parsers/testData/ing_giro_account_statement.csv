@@ -1,0 +1,16 @@
+Umsatzanzeige;Datei erstellt am: 04.09.2024 13:54
+
+IBAN;DE25 5001 0123 4567 8910 11
+Kontoname;Girokonto
+Bank;ING
+Kunde;Hannah Govaert
+Zeitraum;11.08.2023 - 04.09.2024
+Saldo;12.234,00;EUR
+
+Sortierung;Datum absteigend
+
+In der CSV-Datei finden Sie alle bereits gebuchten Ums�tze. Die vorgemerkten Ums�tze werden nicht aufgenommen, auch wenn sie in Ihrem Internetbanking angezeigt werden.
+
+Buchung;Valuta;Auftraggeber/Empf�nger;Buchungstext;Verwendungszweck;Betrag;W�hrung
+04.09.2024;04.09.2024;VISA AMZN MKTP DE*CB3UF2VD5;Lastschrift;NR XXXX 5015 800-279-662 LU KAUFUMSATZ 02.09 16.98 101352 ARN74279814246101247805768;-16,98;EUR
+13.08.2024;13.08.2024;Company;Gehalt/Rente;LOHN / GEHALT 08/24;5.000,72;EUR

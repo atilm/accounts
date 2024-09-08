@@ -1,0 +1,16 @@
+Umsatzanzeige;Datei erstellt am: 04.09.2024 13:56
+
+IBAN;DE08 5001 0517 5553 6114 73
+Kontoname;Extra-Konto
+Bank;ING
+Kunde;Hannah Govaert
+Zeitraum;11.08.2023 - 04.09.2024
+Saldo;12.345,01;EUR
+
+Sortierung;Datum absteigend
+
+In der CSV-Datei finden Sie alle bereits gebuchten Ums�tze. Die vorgemerkten Ums�tze werden nicht aufgenommen, auch wenn sie in Ihrem Internetbanking angezeigt werden.
+
+Buchung;Valuta;Auftraggeber/Empf�nger;Buchungstext;Verwendungszweck;Saldo;W�hrung;Betrag;W�hrung
+29.12.2023;30.12.2023;;Abschluss;;12.345,01;EUR;123,54;EUR
+29.12.2023;30.12.2023;;Zuschlag;;29.953,47;EUR;-3,22;EUR
