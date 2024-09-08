@@ -7,21 +7,24 @@ use encoding_rs::WINDOWS_1252;
 use encoding_rs_io::DecodeReaderBytesBuilder;
 use regex;
 use std::io::Read;
+use std::fs::File;
 
-pub mod bank_statement_header_parser;
+mod bank_statement_header_parser;
 
 pub mod dkb_account_parser;
 pub mod dkb_credit_card_parser;
 pub mod ing_giro_account_parser;
 pub mod ing_extra_account_parser;
-
+pub mod parser_factory;
 
 #[derive(Error, Debug)]
 pub enum ParserError {
     #[error("Invalid date.")]
     InvalidDate,
     #[error("Invalid float.")]
-    FloatError
+    FloatError,
+    #[error("Could not read file")]
+    FileReadError
 }
 
 pub trait BankStatementParserImplementation {

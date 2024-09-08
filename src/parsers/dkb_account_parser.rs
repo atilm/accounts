@@ -3,6 +3,23 @@ use csv;
 
 pub struct DkbAccountParser {}
 
+impl DkbAccountParser {
+    pub fn can_parse(file_path: &str) -> Result<bool, ParserError> {
+        let file = File::open(file_path).unwrap();
+
+        let mut decoder = DecodeReaderBytesBuilder::new()
+            .encoding(Some(WINDOWS_1252))
+            .build(file);
+
+        let mut buf = String::new();
+        decoder
+            .read_to_string(&mut buf)
+            .map_err(|_| ParserError::FileReadError)?;
+
+        Ok(buf.contains("/ Girokonto"))
+    }
+}
+
 impl BankStatementParserImplementation for DkbAccountParser {
     fn get_header_parser(&self) -> BankStatementHeaderParser {
         BankStatementHeaderParser {
@@ -29,23 +46,24 @@ impl BankStatementParserImplementation for DkbAccountParser {
 
 #[cfg(test)]
 mod tests {
-    use super::{BankStatementParser, DkbAccountParser};
-    use crate::model::{AccountRecord, AccountType};
+    use crate::{
+        model::{AccountRecord, AccountType},
+        parsers::parser_factory::ParserFactory,
+    };
     use approx::assert_relative_eq;
     use chrono::NaiveDate;
 
+    const FILE_PATH: &str = "./src/parsers/testData/dkb_account_statement.csv";
+
     fn given_a_dkb_account_statement_file() -> std::fs::File {
-        std::fs::File::open("./src/parsers/testData/dkb_account_statement.csv")
-            .expect("Could not open file.")
+        std::fs::File::open(FILE_PATH).expect("Could not open file.")
     }
 
     #[test]
     fn an_account_file_can_be_parsed_correctly() {
         let file = given_a_dkb_account_statement_file();
 
-        let parser = BankStatementParser {
-            implementation: Box::new(DkbAccountParser {}),
-        };
+        let parser = ParserFactory::create(FILE_PATH).unwrap();
 
         let parser_result = parser.parse(file).unwrap();
 
