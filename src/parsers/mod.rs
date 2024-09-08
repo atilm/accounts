@@ -2,7 +2,7 @@ use bank_statement_header_parser::BankStatementHeaderParser;
 use encoding_rs_io::DecodeReaderBytes;
 use thiserror::Error;
 use crate::model::{account_history::AccountHistory, *};
-use std::{self, io::{self, BufReader}};
+use std::{self, io::BufReader};
 use encoding_rs::WINDOWS_1252;
 use encoding_rs_io::DecodeReaderBytesBuilder;
 use regex;
@@ -37,8 +37,8 @@ pub struct BankStatementParser {
 }
 
 impl BankStatementParser {
-    pub fn parse(&self, reader: impl io::Read) -> Result<AccountHistory, ParserError> {
-        let mut buf_reader = get_decoded_lines_reader(reader);
+    pub fn parse(&self, file_path: &str) -> Result<AccountHistory, ParserError> {
+        let mut buf_reader = get_decoded_lines_reader(file_path);
         let account_history = self.parse_file_header(&mut buf_reader)?;
         let records = self.parse_records(&mut buf_reader)?;
         Ok(AccountHistory {
@@ -74,12 +74,16 @@ impl BankStatementParser {
     }
 }
 
-fn get_decoded_lines_reader(reader: impl io::Read) -> BufReader<DecodeReaderBytes<impl Read, Vec<u8>>> {
-    let decoder = DecodeReaderBytesBuilder::new()
-    .encoding(Some(WINDOWS_1252))
-    .build(reader);
+fn get_decoded_file_reader(file_path: &str) -> DecodeReaderBytes<impl Read, Vec<u8>> {
+    let file = File::open(file_path).unwrap();
+    DecodeReaderBytesBuilder::new()
+        .encoding(Some(WINDOWS_1252))
+        .build(file)
+}
 
-     BufReader::new(decoder)
+fn get_decoded_lines_reader(file_path: &str) -> BufReader<DecodeReaderBytes<impl Read, Vec<u8>>> {
+    let decoder = get_decoded_file_reader(file_path);
+    BufReader::new(decoder)
 }
 
 fn parse_float(s: &str) -> Result<f64, ParserError> {

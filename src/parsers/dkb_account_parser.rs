@@ -55,17 +55,11 @@ mod tests {
 
     const FILE_PATH: &str = "./src/parsers/testData/dkb_account_statement.csv";
 
-    fn given_a_dkb_account_statement_file() -> std::fs::File {
-        std::fs::File::open(FILE_PATH).expect("Could not open file.")
-    }
-
     #[test]
     fn an_account_file_can_be_parsed_correctly() {
-        let file = given_a_dkb_account_statement_file();
-
         let parser = ParserFactory::create(FILE_PATH).unwrap();
 
-        let parser_result = parser.parse(file).unwrap();
+        let parser_result = parser.parse(FILE_PATH).unwrap();
 
         let expected_records = vec![
             AccountRecord {

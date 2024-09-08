@@ -4,6 +4,18 @@ use crate::parsers::*;
 
 pub struct IngGiroAccountParser {}
 
+impl IngGiroAccountParser {
+    pub fn can_parse(file_path: &str) -> Result<bool, ParserError>
+    {
+        let mut decoder = get_decoded_file_reader(file_path);
+
+        let mut buf = String::new();
+        decoder.read_to_string(&mut buf).map_err(|_| ParserError::FileReadError)?;
+
+        Ok(buf.contains(r#"Kontoname;Girokonto"#))
+    }
+}
+
 impl BankStatementParserImplementation for IngGiroAccountParser {
     fn get_header_parser(&self) -> BankStatementHeaderParser {
         BankStatementHeaderParser {
@@ -29,26 +41,19 @@ impl BankStatementParserImplementation for IngGiroAccountParser {
 
 #[cfg(test)]
 mod tests {
-    use super::IngGiroAccountParser;
     use crate::model::{AccountRecord, AccountType};
-    use crate::parsers::BankStatementParser;
+    use crate::parsers::parser_factory::ParserFactory;
     use approx::assert_relative_eq;
     use chrono::NaiveDate;
 
-    fn given_an_ing_giro_account_statement_file() -> std::fs::File {
-        std::fs::File::open("./src/parsers/testData/ing_giro_account_statement.csv")
-            .expect("Could not open file.")
-    }
+    const FILE_PATH: &str = "./src/parsers/testData/ing_giro_account_statement.csv";
 
     #[test]
     fn can_parse_ing_giro_account_statment() {
-        let file = given_an_ing_giro_account_statement_file();
 
-        let parser = BankStatementParser {
-            implementation: Box::new(IngGiroAccountParser {}),
-        };
+        let parser = ParserFactory::create(FILE_PATH).unwrap();
 
-        let parser_result = parser.parse(file).unwrap();
+        let parser_result = parser.parse(FILE_PATH).unwrap();
 
         let expected_records = vec![
             AccountRecord {

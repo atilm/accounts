@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-use super::{dkb_account_parser::DkbAccountParser, dkb_credit_card_parser::DkbCreditCardParser, BankStatementParser, BankStatementParserImplementation};
+use super::{dkb_account_parser::DkbAccountParser, dkb_credit_card_parser::DkbCreditCardParser, ing_extra_account_parser::IngExtraAccountParser, ing_giro_account_parser::IngGiroAccountParser, BankStatementParser, BankStatementParserImplementation};
 
 #[derive(Error, Debug)]
 pub enum ParserFactoryError {
@@ -26,6 +26,14 @@ impl ParserFactory {
 
         if DkbCreditCardParser::can_parse(file_path).unwrap() {
             return Ok(Box::new(DkbCreditCardParser {}))
+        }
+
+        if IngGiroAccountParser::can_parse(file_path).unwrap() {
+            return Ok(Box::new(IngGiroAccountParser {}))
+        }
+
+        if IngExtraAccountParser::can_parse(file_path).unwrap() {
+            return Ok(Box::new(IngExtraAccountParser {}))
         }
 
         Err(ParserFactoryError::NoParserFound)

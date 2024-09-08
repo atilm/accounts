@@ -6,13 +6,9 @@ fn main() {
         implementation: Box::new(DkbAccountParser {}),
     };
 
-    let my_account_file = std::fs::File::open("/home/andreas/Dokumente/Konten/1018793511.csv")
-        .expect("Could not open file");
-    let my_account_history = parser.parse(my_account_file).unwrap();
+    let my_account_history = parser.parse("/home/andreas/Dokumente/Konten/1018793511.csv").unwrap();
 
-    let our_account_file = std::fs::File::open("/home/andreas/Dokumente/Konten/1050155058.csv")
-        .expect("Could not open file");
-    let our_account_history = parser.parse(our_account_file).unwrap();
+    let our_account_history = parser.parse("/home/andreas/Dokumente/Konten/1050155058.csv").unwrap();
 
     let root_area =
         BitMapBackend::new("/home/andreas/Dokumente/Konten/kontostand.png", (1200, 800))

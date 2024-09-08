@@ -6,11 +6,7 @@ pub struct DkbCreditCardParser {}
 impl DkbCreditCardParser {
     pub fn can_parse(file_path: &str) -> Result<bool, ParserError>
     {
-        let file = File::open(file_path).unwrap();
-
-        let mut decoder = DecodeReaderBytesBuilder::new()
-        .encoding(Some(WINDOWS_1252))
-        .build(file);
+        let mut decoder = get_decoded_file_reader(file_path);
 
         let mut buf = String::new();
         decoder.read_to_string(&mut buf).map_err(|_| ParserError::FileReadError)?;
@@ -51,18 +47,11 @@ mod tests {
 
     const FILE_PATH: &str = "./src/parsers/testData/dkb_credit_card_statement.csv";
 
-    fn given_a_dkb_account_statement_file() -> std::fs::File {
-        std::fs::File::open(FILE_PATH)
-            .expect("Could not open file.")
-    }
-
     #[test]
     fn an_account_file_can_be_parsed_correctly() {
-        let file = given_a_dkb_account_statement_file();
-
         let parser = ParserFactory::create(FILE_PATH).unwrap();
 
-        let parser_result = parser.parse(file).unwrap();
+        let parser_result = parser.parse(FILE_PATH).unwrap();
 
         let expected_records = vec![
             AccountRecord {
