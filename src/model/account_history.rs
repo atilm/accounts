@@ -33,28 +33,58 @@ impl AccountHistory {
 }
 
 // ToDo: merge two AccountHistories of the same account
-
+#[derive(Clone)]
 pub struct MergeRule {
-    other_side_contains: Option<String>,
-    booking_text_contains: Option<String>,
+    pub other_side_is: Option<String>,
+    pub booking_text_contains: Option<String>,
 }
 
 impl MergeRule {
     fn applies(&self, record: &AccountRecord) -> bool {
+        self.other_side_rule_applies(record) && self.booking_text_rule_applies(record)
+    }
+
+    fn other_side_rule_applies(&self, record: &AccountRecord) -> bool {
+        // contrary to the booking text rule, a rule value of None must
+        // also be evaluated
+        if self.other_side_is == None && record.other_side == None {
+            return true;
+        }
+
+        if let Some(required_other_side) = &self.other_side_is {
+            if let Some(actual_other_side) = &record.other_side {
+                return actual_other_side.to_lowercase() == required_other_side.to_lowercase();
+            }
+        }
+
         false
+    }
+
+    fn booking_text_rule_applies(&self, record: &AccountRecord) -> bool {
+        // check only, if the rule has some value
+        if let Some(required_partial_booking_text) = &self.booking_text_contains {
+            return record
+                .booking_text
+                .to_lowercase()
+                .contains(&required_partial_booking_text.to_lowercase());
+        }
+
+        // otherwise the result must not negate the total result
+        true
     }
 }
 
 pub fn merge_records(
     histories: Vec<Vec<AccountRecord>>,
-    remove_rules: Vec<MergeRule>
+    remove_rules: Vec<MergeRule>,
 ) -> Result<Vec<AccountRecord>, AccountHistoryError> {
-    return Ok(histories.concat().into_iter().unique().collect());
-    // merge two overlapping histories from the same account
-    // merge two histories from different accounts
-    //   remove duplicate entries
-    //   remove bookings between own accounts
-    // output a report or log
+    let all_records = histories.concat();
+    let unique_records: Vec<AccountRecord> = all_records.into_iter().unique().collect();
+    let filtered_records = unique_records
+        .into_iter()
+        .filter(|record| !remove_rules.iter().any(|rule| rule.applies(record)))
+        .collect();
+    return Ok(filtered_records);
 }
 
 #[cfg(test)]
@@ -232,20 +262,21 @@ mod tests {
 
         let merge_rules = vec![
             MergeRule {
-                other_side_contains: Some("John Doe".to_string()),
+                other_side_is: Some("John Doe".to_string()),
                 booking_text_contains: None,
             },
             MergeRule {
-                other_side_contains: None,
+                other_side_is: None,
                 booking_text_contains: Some("Einzahlung".to_string()),
             },
             MergeRule {
-                other_side_contains: None,
+                other_side_is: None,
                 booking_text_contains: Some("UEBERTRG.SALDO".to_string()),
             },
         ];
 
-        let merge_result = when_records_are_merged_with_rules(vec![record_set], merge_rules).unwrap();
+        let merge_result =
+            when_records_are_merged_with_rules(vec![record_set], merge_rules).unwrap();
 
         assert_eq!(
             merge_result,
