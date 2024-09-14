@@ -1,0 +1,10 @@
+[
+  {
+    "other_side_is": "Jane Doe",
+    "booking_text_contains": null
+  },
+  {
+    "other_side_is": null,
+    "booking_text_contains": "Saving"
+  }
+]

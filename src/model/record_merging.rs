@@ -1,7 +1,8 @@
 use super::AccountRecord;
 use itertools::Itertools;
+use serde::Deserialize;
 
-#[derive(Clone)]
+#[derive(Deserialize, Clone)]
 pub struct MergeRule {
     pub other_side_is: Option<String>,
     pub booking_text_contains: Option<String>,
