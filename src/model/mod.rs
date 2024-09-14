@@ -1,4 +1,5 @@
 pub mod account_history;
+pub mod record_merging;
 
 use std::hash::Hash;
 use core::hash::Hasher;
