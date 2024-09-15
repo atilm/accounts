@@ -1,14 +1,101 @@
-use accountslib::parsers::{dkb_account_parser::DkbAccountParser, BankStatementParser};
+use std::{
+    fs::{self},
+    str::FromStr,
+};
+
+use accountslib::{
+    accounts_reading::merge_rule_reading::read_merge_rules,
+    model::{account_history::AccountHistory, record_merging::merge_records, AccountRecord},
+    parsers::{
+        dkb_account_parser::DkbAccountParser, parser_factory::ParserFactory, BankStatementParser, ParserError,
+    },
+};
+use clap::{Parser, Subcommand};
 use plotters::prelude::*;
 
+#[derive(Parser)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    #[command(subcommand)]
+    cmd: Commands,
+}
+
+#[derive(Subcommand, Debug, Clone)]
+enum Commands {
+    Plot,
+    Balance {
+        dir_path: String,
+        report_path: Option<String>,
+    },
+}
+
 fn main() {
+    let args = Args::parse();
+
+    match args.cmd {
+        Commands::Plot => plot_accounts(),
+        Commands::Balance {
+            dir_path,
+            report_path,
+        } => generate_balance_sheet(&dir_path, &report_path.unwrap_or("./balance".to_string())),
+    }
+}
+
+fn generate_balance_sheet(dir_path: &str, report_path: &str) {
+    let dir_entries = fs::read_dir(dir_path).expect("Could not list files in dir {dir_path}");
+
+    let own_account_rules_file = "own_account_rules.json";
+
+    let file_paths: Vec<String> = dir_entries
+        .into_iter()
+        .filter_map(|r| Some(r.unwrap()))
+        .filter(|r| r.path().is_file())
+        .filter(|r| r.file_name() != own_account_rules_file)
+        .map(|r| String::from_str(&r.path().to_str().unwrap()).unwrap())
+        .collect();
+
+    let account_histories: Vec<AccountHistory> = file_paths
+        .iter()
+        .map(|path| {
+            let parser = ParserFactory::create(path);
+            match parser {
+                Ok(p) => p.parse(path),
+                Err(_) => Err(ParserError::FileReadError)
+            }
+        })
+        .filter_map(|r| r.ok())
+        .collect();
+
+    let own_account_rules_file_path = std::path::Path::new(dir_path).join(own_account_rules_file);
+
+    let own_account_rules = read_merge_rules(own_account_rules_file_path.to_str().unwrap())
+        .expect("Could not read merge rules");
+
+    let all_records: Vec<Vec<AccountRecord>> =
+        account_histories.into_iter().map(|h| h.records).collect();
+
+    let merged_records = merge_records(all_records, own_account_rules);
+
+    let report_contents: String = merged_records
+        .into_iter()
+        .map(|r| format!("{r:?}\n"))
+        .collect();
+
+    fs::write(report_path, report_contents).expect("Could not write report");
+}
+
+fn plot_accounts() {
     let parser = BankStatementParser {
         implementation: Box::new(DkbAccountParser {}),
     };
 
-    let my_account_history = parser.parse("/home/andreas/Dokumente/Konten/1018793511.csv").unwrap();
+    let my_account_history = parser
+        .parse("/home/andreas/Dokumente/Konten/1018793511.csv")
+        .unwrap();
 
-    let our_account_history = parser.parse("/home/andreas/Dokumente/Konten/1050155058.csv").unwrap();
+    let our_account_history = parser
+        .parse("/home/andreas/Dokumente/Konten/1050155058.csv")
+        .unwrap();
 
     let root_area =
         BitMapBackend::new("/home/andreas/Dokumente/Konten/kontostand.png", (1200, 800))
