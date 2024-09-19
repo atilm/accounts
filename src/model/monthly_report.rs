@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{cmp::Ordering, collections::HashMap};
 
 use chrono::Datelike;
 
@@ -13,6 +13,12 @@ pub struct YearMonth {
 impl YearMonth {
     pub fn new(year: i32, month0: u32) -> YearMonth {
         YearMonth { year, month0 }
+    }
+
+    pub fn compare(&self, other: &YearMonth) -> Ordering {
+        let a = self.year * 100 + self.month0 as i32;
+        let b = other.year * 100 + other.month0 as i32;
+        a.cmp(&b)
     }
 }
 
@@ -53,6 +59,8 @@ impl MonthlyReports {
             reports.push(report);
         }
 
+        reports.sort_unstable_by(|a, b| a.month.compare(&b.month));
+
         MonthlyReports { reports }
     }
 }
@@ -80,16 +88,16 @@ mod tests {
 
         let expected_reports = vec![
             MonthlyReport {
-                month: YearMonth::new(2023, 3),
-                records: vec![new_record(400.0, "6.4.2023")],
-            },
-            MonthlyReport {
                 month: YearMonth::new(2023, 2),
                 records: vec![
                     new_record(-100.0, "5.3.2023"),
                     new_record(200.0, "5.3.2023"),
                     new_record(-300.0, "6.3.2023"),
                 ],
+            },
+            MonthlyReport {
+                month: YearMonth::new(2023, 3),
+                records: vec![new_record(400.0, "6.4.2023")],
             },
             MonthlyReport {
                 month: YearMonth::new(2024, 2),
@@ -100,8 +108,6 @@ mod tests {
             },
         ];
 
-        assert!(monthly_reports.reports.contains(&expected_reports[0]));
-        assert!(monthly_reports.reports.contains(&expected_reports[1]));
-        assert!(monthly_reports.reports.contains(&expected_reports[2]));
+        assert_eq!(monthly_reports.reports, expected_reports);
     }
 }
