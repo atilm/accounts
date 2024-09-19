@@ -28,6 +28,26 @@ pub struct MonthlyReport {
     records: Vec<AccountRecord>,
 }
 
+impl MonthlyReport {
+    pub fn earnings(&self) -> f64 {
+        self.records.iter()
+            .filter(|r| r.amount >= 0.0)
+            .map(|r| r.amount)
+            .sum()
+    }
+
+    pub fn spendings(&self) -> f64 {
+        self.records.iter()
+            .filter(|r| r.amount < 0.0)
+            .map(|r| r.amount)
+            .sum()
+    }
+
+    pub fn balance(&self) -> f64 {
+        self.spendings() + self.earnings()
+    }
+}
+
 #[derive(Default)]
 pub struct MonthlyReports {
     reports: Vec<MonthlyReport>,
@@ -67,6 +87,8 @@ impl MonthlyReports {
 
 #[cfg(test)]
 mod tests {
+    use approx::assert_relative_eq;
+
     use crate::model::monthly_report::YearMonth;
 
     use super::{super::test_util::*, MonthlyReport, MonthlyReports};
@@ -78,6 +100,7 @@ mod tests {
             new_record(200.0, "5.3.2023"),
             new_record(-300.0, "6.3.2023"),
             new_record(400.0, "6.4.2023"),
+            new_record(200.0, "20.4.2023"),
             new_record(-300.0, "5.3.2024"),
             new_record(400.0, "28.3.2024"),
         ];
@@ -97,7 +120,10 @@ mod tests {
             },
             MonthlyReport {
                 month: YearMonth::new(2023, 3),
-                records: vec![new_record(400.0, "6.4.2023")],
+                records: vec![
+                    new_record(400.0, "6.4.2023"),
+                    new_record(200.0, "20.4.2023"),
+                ],
             },
             MonthlyReport {
                 month: YearMonth::new(2024, 2),
@@ -109,5 +135,12 @@ mod tests {
         ];
 
         assert_eq!(monthly_reports.reports, expected_reports);
+        assert_relative_eq!(monthly_reports.reports[0].earnings(), 200.0);
+        assert_relative_eq!(monthly_reports.reports[0].spendings(), -400.0);
+        assert_relative_eq!(monthly_reports.reports[0].balance(), -200.0);
+        assert_relative_eq!(monthly_reports.reports[1].earnings(), 600.0);
+        assert_relative_eq!(monthly_reports.reports[1].spendings(), 0.0);
+        assert_relative_eq!(monthly_reports.reports[2].earnings(), 400.0);
+        assert_relative_eq!(monthly_reports.reports[2].spendings(), -300.0);
     }
 }
