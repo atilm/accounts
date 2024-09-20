@@ -5,7 +5,7 @@ use std::{
 
 use accountslib::{
     accounts_reading::merge_rule_reading::read_merge_rules,
-    model::{account_history::AccountHistory, record_merging::merge_records, AccountRecord},
+    model::{account_history::AccountHistory, monthly_report::MonthlyReports, record_merging::merge_records, AccountRecord},
     parsers::{
         dkb_account_parser::DkbAccountParser, parser_factory::ParserFactory, BankStatementParser, ParserError,
     },
@@ -76,9 +76,13 @@ fn generate_balance_sheet(dir_path: &str, report_path: &str) {
 
     let merged_records = merge_records(all_records, own_account_rules);
 
-    let report_contents: String = merged_records
+    let monthly_reports = MonthlyReports::create(merged_records);
+
+    let report_contents: String = monthly_reports
+        .reports
         .into_iter()
-        .map(|r| format!("{r:?}\n"))
+        .rev()
+        .map(|r| format!("{r}"))
         .collect();
 
     fs::write(report_path, report_contents).expect("Could not write report");

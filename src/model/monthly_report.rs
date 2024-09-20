@@ -1,6 +1,7 @@
-use std::{cmp::Ordering, collections::HashMap};
+use std::{cmp::Ordering, collections::HashMap, fmt::Display};
 
 use chrono::Datelike;
+use itertools::Itertools;
 
 use super::AccountRecord;
 
@@ -8,6 +9,12 @@ use super::AccountRecord;
 pub struct YearMonth {
     year: i32,
     month0: u32,
+}
+
+impl Display for YearMonth {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}-{}", self.year, self.month0 + 1)
+    }
 }
 
 impl YearMonth {
@@ -28,16 +35,53 @@ pub struct MonthlyReport {
     records: Vec<AccountRecord>,
 }
 
+impl Display for MonthlyReport {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let n = 10;
+
+        write!(f, "{}\n", self.month)?;
+        write!(f, "Earnings: {}\n", self.earnings())?;
+        for r in self.biggest_earnings(n) {
+            write!(f, "  {:?}\n", r)?;
+        }
+        write!(f, "Spendings: {}\n", self.spendings())?;
+        for r in self.biggest_spendings(n) {
+            write!(f, "  {:?}\n", r)?;
+        }
+        write!(f, "Balance: {}\n", self.balance())
+    }
+}
+
 impl MonthlyReport {
+    pub fn biggest_earnings(&self, n: usize) -> Vec<&AccountRecord> {
+        self.records
+            .iter()
+            .filter(|r| r.amount >= 0.0)
+            .sorted_unstable_by(|a, b| b.amount.partial_cmp(&a.amount).unwrap())
+            .take(n)
+            .collect()
+    }
+
+    pub fn biggest_spendings(&self, n: usize) -> Vec<&AccountRecord> {
+        self.records
+            .iter()
+            .filter(|r| r.amount <= 0.0)
+            .sorted_unstable_by(|a, b| a.amount.partial_cmp(&b.amount).unwrap())
+            .take(n)
+            .collect()
+    }
+
     pub fn earnings(&self) -> f64 {
-        self.records.iter()
+        self.records
+            .iter()
             .filter(|r| r.amount >= 0.0)
             .map(|r| r.amount)
             .sum()
     }
 
     pub fn spendings(&self) -> f64 {
-        self.records.iter()
+        self.records
+            .iter()
             .filter(|r| r.amount < 0.0)
             .map(|r| r.amount)
             .sum()
@@ -50,7 +94,7 @@ impl MonthlyReport {
 
 #[derive(Default)]
 pub struct MonthlyReports {
-    reports: Vec<MonthlyReport>,
+    pub reports: Vec<MonthlyReport>,
 }
 
 impl MonthlyReports {
@@ -89,12 +133,59 @@ impl MonthlyReports {
 mod tests {
     use approx::assert_relative_eq;
 
-    use crate::model::monthly_report::YearMonth;
+    use crate::model::{monthly_report::YearMonth, AccountRecord};
 
     use super::{super::test_util::*, MonthlyReport, MonthlyReports};
 
     #[test]
-    fn create_a_monthly_report() {
+    fn return_biggest_earnings() {
+        let report = MonthlyReport {
+            month: YearMonth {
+                year: 2024,
+                month0: 0,
+            },
+            records: vec![
+                new_record(110.0, "1.1.2024"),
+                new_record(130.0, "1.1.2024"),
+                new_record(120.0, "1.1.2024"),
+                new_record(-150.0, "1.1.2024"),
+            ],
+        };
+
+        let result = report.biggest_earnings(2);
+
+        let expected = vec![new_record(130.0, "1.1.2024"), new_record(120.0, "1.1.2024")];
+
+        assert_eq!(result, expected.iter().collect::<Vec<&AccountRecord>>());
+    }
+
+    #[test]
+    fn return_biggest_spendings() {
+        let report = MonthlyReport {
+            month: YearMonth {
+                year: 2024,
+                month0: 0,
+            },
+            records: vec![
+                new_record(-110.0, "1.1.2024"),
+                new_record(-130.0, "1.1.2024"),
+                new_record(-120.0, "1.1.2024"),
+                new_record(150.0, "1.1.2024"),
+            ],
+        };
+
+        let result = report.biggest_spendings(2);
+
+        let expected = vec![
+            new_record(-130.0, "1.1.2024"),
+            new_record(-120.0, "1.1.2024"),
+        ];
+
+        assert_eq!(result, expected.iter().collect::<Vec<&AccountRecord>>());
+    }
+
+    #[test]
+    fn create_monthly_reports() {
         let given_records_from_various_months = vec![
             new_record(-100.0, "5.3.2023"),
             new_record(200.0, "5.3.2023"),
