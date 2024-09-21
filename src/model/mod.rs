@@ -1,9 +1,9 @@
 pub mod account_history;
-pub mod record_merging;
 pub mod monthly_report;
+pub mod record_merging;
 
-use std::hash::Hash;
 use core::hash::Hasher;
+use std::hash::Hash;
 
 use chrono::NaiveDate;
 use thiserror::Error;
@@ -12,7 +12,7 @@ pub enum RecordCategory {
     Housing,
     Child,
     Food,
-    Saving
+    Saving,
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -20,7 +20,7 @@ pub enum AccountType {
     DKBAccount,
     DKBCreditCard,
     IngGiroAccount,
-    IngExtraAccount
+    IngExtraAccount,
 }
 
 #[derive(Debug, Default, PartialEq, Clone)]
@@ -29,10 +29,10 @@ pub struct AccountRecord {
     pub date: NaiveDate,
     pub other_side: Option<String>,
     pub booking_text: String,
-    pub purpose: Option<String>
+    pub purpose: Option<String>,
 }
 
-impl Eq for AccountRecord { }
+impl Eq for AccountRecord {}
 
 impl Hash for AccountRecord {
     fn hash<H: Hasher>(&self, state: &mut H) {
@@ -45,8 +45,8 @@ impl Hash for AccountRecord {
 
 #[cfg(test)]
 mod test_util {
-    use crate::model::account_history::AccountHistory;
     use super::*;
+    use crate::model::account_history::AccountHistory;
 
     pub fn given_a_history() -> AccountHistory {
         AccountHistory {
@@ -61,18 +61,18 @@ mod test_util {
             ],
         }
     }
-    
+
     use std::{str::FromStr, vec};
     pub fn new_record(amount: f64, date: &str) -> AccountRecord {
         let date = str_date(date);
-    
+
         AccountRecord {
             amount,
             date,
             ..AccountRecord::default()
         }
     }
-    
+
     pub fn str_date(date: &str) -> NaiveDate {
         chrono::NaiveDate::parse_from_str(date, "%d.%m.%Y").unwrap()
     }
