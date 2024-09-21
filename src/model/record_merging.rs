@@ -1,4 +1,5 @@
 use super::AccountRecord;
+use chrono::NaiveDate;
 use itertools::Itertools;
 use serde::Deserialize;
 
@@ -56,11 +57,24 @@ pub fn merge_records(
     return filtered_records;
 }
 
+pub fn merge_records_from_date(
+    histories: Vec<Vec<AccountRecord>>,
+    remove_rules: Vec<MergeRule>,
+    start_date: NaiveDate,
+) -> Vec<AccountRecord> {
+    let merged_records = merge_records(histories, remove_rules);
+
+    merged_records
+        .into_iter()
+        .filter(|r| r.date >= start_date)
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::*;
     use crate::model::account_history::AccountHistory;
+    use crate::model::*;
     use chrono::NaiveDate;
     use std::{str::FromStr, vec};
 
@@ -107,9 +121,7 @@ mod tests {
         }
     }
 
-    fn when_records_are_merged(
-        histories: Vec<Vec<AccountRecord>>,
-    ) -> Vec<AccountRecord> {
+    fn when_records_are_merged(histories: Vec<Vec<AccountRecord>>) -> Vec<AccountRecord> {
         merge_records(histories, vec![])
     }
 
@@ -134,8 +146,7 @@ mod tests {
 
         let second_set = vec![new_record(300.0, "3.3.2024"), new_record(400.0, "4.3.2024")];
 
-        let merge_result =
-            when_records_are_merged(vec![first_set.clone(), second_set.clone()]);
+        let merge_result = when_records_are_merged(vec![first_set.clone(), second_set.clone()]);
 
         let expected = vec![
             new_record(100.0, "1.3.2024"),
@@ -143,6 +154,22 @@ mod tests {
             new_record(300.0, "3.3.2024"),
             new_record(400.0, "4.3.2024"),
         ];
+
+        assert_eq!(merge_result, expected);
+    }
+
+    #[test]
+    fn when_a_start_date_is_given_records_before_this_date_are_removed() {
+        let first_set = vec![new_record(100.0, "1.3.2024"), new_record(200.0, "2.3.2024")];
+        let second_set = vec![new_record(300.0, "3.3.2024"), new_record(400.0, "4.3.2024")];
+
+        let merge_result = merge_records_from_date(
+            vec![first_set, second_set],
+            vec![],
+            NaiveDate::from_ymd_opt(2024, 3, 3).unwrap(),
+        );
+
+        let expected = vec![new_record(300.0, "3.3.2024"), new_record(400.0, "4.3.2024")];
 
         assert_eq!(merge_result, expected);
     }
@@ -163,8 +190,7 @@ mod tests {
             new_record(600.0, "5.3.2024"),
         ];
 
-        let merge_result =
-            when_records_are_merged(vec![first_set.clone(), second_set.clone()]);
+        let merge_result = when_records_are_merged(vec![first_set.clone(), second_set.clone()]);
 
         let expected = vec![
             new_record(100.0, "1.3.2024"),
@@ -207,8 +233,7 @@ mod tests {
             },
         ];
 
-        let merge_result =
-            when_records_are_merged_with_rules(vec![record_set], merge_rules);
+        let merge_result = when_records_are_merged_with_rules(vec![record_set], merge_rules);
 
         assert_eq!(
             merge_result,

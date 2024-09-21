@@ -6,8 +6,10 @@ use std::{
 use accountslib::{
     accounts_reading::merge_rule_reading::read_merge_rules,
     model::{
-        account_history::AccountHistory, monthly_report::MonthlyReports,
-        record_merging::merge_records, AccountRecord,
+        account_history::AccountHistory,
+        monthly_report::MonthlyReports,
+        record_merging::{merge_records, merge_records_from_date},
+        AccountRecord,
     },
     parsers::{
         dkb_account_parser::DkbAccountParser, parser_factory::ParserFactory, BankStatementParser,
@@ -85,14 +87,16 @@ fn generate_balance_sheet(dir_path: &str, report_path: &str, start_date: Option<
     let all_records: Vec<Vec<AccountRecord>> =
         account_histories.into_iter().map(|h| h.records).collect();
 
-    let merged_records = merge_records(all_records, own_account_rules);
-
     let start_date = start_date.map(|s| NaiveDate::parse_from_str(s.as_ref(), "%d.%m.%Y"));
 
-    let monthly_reports = match start_date {
-        Some(start_date) => MonthlyReports::create_from_date(merged_records, start_date.unwrap()),
-        None => MonthlyReports::create(merged_records),
+    let merged_records = match start_date {
+        Some(start_date) => {
+            merge_records_from_date(all_records, own_account_rules, start_date.unwrap())
+        }
+        None => merge_records(all_records, own_account_rules),
     };
+
+    let monthly_reports = MonthlyReports::create(merged_records);
 
     let report_contents: String = monthly_reports
         .reports
