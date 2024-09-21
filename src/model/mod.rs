@@ -32,6 +32,16 @@ pub struct AccountRecord {
     pub purpose: Option<String>,
 }
 
+impl AccountRecord {
+    pub fn is_earning(&self) -> bool {
+        self.amount >= 0.0
+    }
+
+    pub fn is_spending(&self) -> bool {
+        self.amount < 0.0
+    }
+}
+
 impl Eq for AccountRecord {}
 
 impl Hash for AccountRecord {

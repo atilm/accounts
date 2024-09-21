@@ -56,7 +56,7 @@ impl MonthlyReport {
     pub fn biggest_earnings(&self, n: usize) -> Vec<&AccountRecord> {
         self.records
             .iter()
-            .filter(|r| r.amount >= 0.0)
+            .filter(|r| r.is_earning())
             .sorted_unstable_by(|a, b| b.amount.partial_cmp(&a.amount).unwrap())
             .take(n)
             .collect()
@@ -65,7 +65,7 @@ impl MonthlyReport {
     pub fn biggest_spendings(&self, n: usize) -> Vec<&AccountRecord> {
         self.records
             .iter()
-            .filter(|r| r.amount <= 0.0)
+            .filter(|r| r.is_spending())
             .sorted_unstable_by(|a, b| a.amount.partial_cmp(&b.amount).unwrap())
             .take(n)
             .collect()
@@ -74,7 +74,7 @@ impl MonthlyReport {
     pub fn earnings(&self) -> f64 {
         self.records
             .iter()
-            .filter(|r| r.amount >= 0.0)
+            .filter(|r| r.is_earning())
             .map(|r| r.amount)
             .sum()
     }
@@ -82,7 +82,7 @@ impl MonthlyReport {
     pub fn spendings(&self) -> f64 {
         self.records
             .iter()
-            .filter(|r| r.amount < 0.0)
+            .filter(|r| r.is_spending())
             .map(|r| r.amount)
             .sum()
     }
