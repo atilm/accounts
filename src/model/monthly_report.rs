@@ -1,6 +1,6 @@
 use std::{cmp::Ordering, collections::HashMap, fmt::Display};
 
-use chrono::Datelike;
+use chrono::{Datelike, NaiveDate};
 use itertools::Itertools;
 
 use super::AccountRecord;
@@ -127,11 +127,20 @@ impl MonthlyReports {
 
         MonthlyReports { reports }
     }
+
+    pub fn create_from_date(records: Vec<AccountRecord>, start_date: NaiveDate) -> MonthlyReports {
+        let records_after_date = records.into_iter()
+            .filter(|r| r.date >= start_date)
+            .collect();
+
+        MonthlyReports::create(records_after_date)
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use approx::assert_relative_eq;
+    use chrono::NaiveDate;
 
     use crate::model::{monthly_report::YearMonth, AccountRecord};
 
@@ -233,5 +242,48 @@ mod tests {
         assert_relative_eq!(monthly_reports.reports[1].spendings(), 0.0);
         assert_relative_eq!(monthly_reports.reports[2].earnings(), 400.0);
         assert_relative_eq!(monthly_reports.reports[2].spendings(), -300.0);
+    }
+
+    #[test]
+    fn create_from_date() {
+        let given_records_from_various_months = vec![
+            new_record(-100.0, "5.3.2023"),
+            new_record(200.0, "5.3.2023"),
+            new_record(-300.0, "6.3.2023"),
+            new_record(400.0, "6.4.2023"),
+            new_record(200.0, "20.4.2023"),
+            new_record(-300.0, "5.3.2024"),
+            new_record(400.0, "28.3.2024"),
+        ];
+
+        let monthly_reports = MonthlyReports::create_from_date(
+            given_records_from_various_months,
+            NaiveDate::from_ymd_opt(2023, 3, 6).unwrap(),
+        );
+
+        let expected_reports = vec![
+            MonthlyReport {
+                month: YearMonth::new(2023, 2),
+                records: vec![
+                    new_record(-300.0, "6.3.2023"),
+                ],
+            },
+            MonthlyReport {
+                month: YearMonth::new(2023, 3),
+                records: vec![
+                    new_record(400.0, "6.4.2023"),
+                    new_record(200.0, "20.4.2023"),
+                ],
+            },
+            MonthlyReport {
+                month: YearMonth::new(2024, 2),
+                records: vec![
+                    new_record(-300.0, "5.3.2024"),
+                    new_record(400.0, "28.3.2024"),
+                ],
+            },
+        ];
+
+        assert_eq!(monthly_reports.reports, expected_reports);
     }
 }

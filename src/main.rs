@@ -5,11 +5,16 @@ use std::{
 
 use accountslib::{
     accounts_reading::merge_rule_reading::read_merge_rules,
-    model::{account_history::AccountHistory, monthly_report::MonthlyReports, record_merging::merge_records, AccountRecord},
+    model::{
+        account_history::AccountHistory, monthly_report::MonthlyReports,
+        record_merging::merge_records, AccountRecord,
+    },
     parsers::{
-        dkb_account_parser::DkbAccountParser, parser_factory::ParserFactory, BankStatementParser, ParserError,
+        dkb_account_parser::DkbAccountParser, parser_factory::ParserFactory, BankStatementParser,
+        ParserError,
     },
 };
+use chrono::NaiveDate;
 use clap::{Parser, Subcommand};
 use plotters::prelude::*;
 
@@ -26,6 +31,7 @@ enum Commands {
     Balance {
         dir_path: String,
         report_path: Option<String>,
+        start_date: Option<String>,
     },
 }
 
@@ -37,11 +43,16 @@ fn main() {
         Commands::Balance {
             dir_path,
             report_path,
-        } => generate_balance_sheet(&dir_path, &report_path.unwrap_or("./balance".to_string())),
+            start_date,
+        } => generate_balance_sheet(
+            &dir_path,
+            &report_path.unwrap_or("./balance".to_string()),
+            start_date,
+        ),
     }
 }
 
-fn generate_balance_sheet(dir_path: &str, report_path: &str) {
+fn generate_balance_sheet(dir_path: &str, report_path: &str, start_date: Option<String>) {
     let dir_entries = fs::read_dir(dir_path).expect("Could not list files in dir {dir_path}");
 
     let own_account_rules_file = "own_account_rules.json";
@@ -60,7 +71,7 @@ fn generate_balance_sheet(dir_path: &str, report_path: &str) {
             let parser = ParserFactory::create(path);
             match parser {
                 Ok(p) => p.parse(path),
-                Err(_) => Err(ParserError::FileReadError)
+                Err(_) => Err(ParserError::FileReadError),
             }
         })
         .filter_map(|r| r.ok())
@@ -76,7 +87,12 @@ fn generate_balance_sheet(dir_path: &str, report_path: &str) {
 
     let merged_records = merge_records(all_records, own_account_rules);
 
-    let monthly_reports = MonthlyReports::create(merged_records);
+    let start_date = start_date.map(|s| NaiveDate::parse_from_str(s.as_ref(), "%d.%m.%Y"));
+
+    let monthly_reports = match start_date {
+        Some(start_date) => MonthlyReports::create_from_date(merged_records, start_date.unwrap()),
+        None => MonthlyReports::create(merged_records),
+    };
 
     let report_contents: String = monthly_reports
         .reports
