@@ -97,6 +97,10 @@ pub struct MonthlyReports {
     pub reports: Vec<MonthlyReport>,
 }
 
+pub fn average(values: &[f64]) -> f64 {
+    values.iter().sum::<f64>() / (values.len() as f64)
+}
+
 impl MonthlyReports {
     pub fn create(records: Vec<AccountRecord>) -> MonthlyReports {
         let mut records_by_month: HashMap<YearMonth, Vec<AccountRecord>> = HashMap::new();
@@ -127,16 +131,59 @@ impl MonthlyReports {
 
         MonthlyReports { reports }
     }
+
+    pub fn average_earnings(&self) -> f64 {
+        let earnings: Vec<f64> = self.reports.iter().map(|r| r.earnings()).collect();
+        average(&earnings)
+    }
+
+    pub fn average_spendings(&self) -> f64 {
+        let spendings: Vec<f64> = self.reports.iter().map(|r| r.spendings()).collect();
+        average(&spendings)
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use approx::assert_relative_eq;
-    use chrono::NaiveDate;
 
     use crate::model::{monthly_report::YearMonth, AccountRecord};
 
     use super::{super::test_util::*, MonthlyReport, MonthlyReports};
+
+    #[test]
+    fn return_average_spendings_and_earnings() {
+        let reports = MonthlyReports {
+            reports: vec![
+                MonthlyReport {
+                    month: YearMonth {
+                        year: 2024,
+                        month0: 0,
+                    },
+                    records: vec![
+                        new_record(200.0, "1.1.2024"),
+                        new_record(-300.0, "1.1.2024"),
+                    ],
+                },
+                MonthlyReport {
+                    month: YearMonth {
+                        year: 2024,
+                        month0: 1,
+                    },
+                    records: vec![
+                        new_record(100.0, "1.1.2024"),
+                        new_record(-400.0, "1.1.2024"),
+                    ],
+                },
+            ],
+        };
+
+        let average_earnings = reports.average_earnings();
+        assert_relative_eq!(average_earnings, 150.0);
+
+        let average_spendings = reports.average_spendings();
+        assert_relative_eq!(average_spendings, -350.0);
+    }
 
     #[test]
     fn return_biggest_earnings() {

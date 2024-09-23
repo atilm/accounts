@@ -98,12 +98,20 @@ fn generate_balance_sheet(dir_path: &str, report_path: &str, start_date: Option<
 
     let monthly_reports = MonthlyReports::create(merged_records);
 
-    let report_contents: String = monthly_reports
-        .reports
-        .into_iter()
-        .rev()
-        .map(|r| format!("{r}"))
-        .collect();
+    let report_contents = format!(
+        "Average Earnings: {}
+Average Spendings: {}
+
+{}",
+        monthly_reports.average_earnings(),
+        monthly_reports.average_spendings(),
+        monthly_reports
+            .reports
+            .into_iter()
+            .rev()
+            .map(|r| format!("{r}"))
+            .collect::<String>()
+    );
 
     fs::write(report_path, report_contents).expect("Could not write report");
 }
