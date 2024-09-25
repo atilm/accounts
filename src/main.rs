@@ -7,7 +7,7 @@ use accountslib::{
     accounts_reading::merge_rule_reading::read_merge_rules,
     model::{
         account_history::AccountHistory,
-        monthly_report::MonthlyReports,
+        monthly_reports::MonthlyReports,
         record_merging::{merge_records, merge_records_from_date},
         AccountRecord,
     },
